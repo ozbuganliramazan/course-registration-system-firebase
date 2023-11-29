@@ -9,6 +9,7 @@ import AllCourses from "./screen/AllCourses";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { AntDesign } from "@expo/vector-icons";
+import CoursesContextProvider from "./store/coursesContext";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -63,16 +64,18 @@ function CourseOverview() {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen
-          name="CourseOverview"
-          component={CourseOverview}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="ManageCourse" component={ManageCourse} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <CoursesContextProvider>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen
+            name="CourseOverview"
+            component={CourseOverview}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="ManageCourse" component={ManageCourse} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </CoursesContextProvider>
   );
 }
 
