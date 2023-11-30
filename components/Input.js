@@ -1,16 +1,19 @@
 import { StyleSheet, Text, View, TextInput } from "react-native";
 import React from "react";
 
-export default function Input({ label, textInputConfig,style }) {
+export default function Input({ label, textInputConfig, style, invaid }) {
   const inputStyles = [styles.input];
 
   if (textInputConfig && textInputConfig.multiline) {
     inputStyles.push(styles.inputMultiline);
   }
+  if (invaid) {
+    inputStyles.push(styles.invaidInput)
+  }
 
   return (
-    <View style={[styles.inputContainer,style ]}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.inputContainer, style]}>
+      <Text style={[styles.label, invaid && styles.invaidLabel]}>{label}</Text>
       <TextInput style={inputStyles} {...textInputConfig} />
     </View>
   );
@@ -20,7 +23,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     marginHorizontal: 4,
     marginVertical: 10,
-  
   },
   label: {
     fontSize: 15,
@@ -36,5 +38,11 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 100,
     textAlignVertical: "top",
+  },
+  invaidLabel: {
+    color: "red",
+  },
+  invaidInput: {
+    backgroundColor: "red",
   },
 });

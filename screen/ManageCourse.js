@@ -1,79 +1,92 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import React, { useLayoutEffect, useContext } from "react";
+import React, { useState } from "react";
+import { useLayoutEffect } from "react";
 import { EvilIcons } from "@expo/vector-icons";
+import { useContext } from "react";
 import { CoursesContext } from "../store/coursesContext";
 import CourseForm from "../components/CourseForm";
+import { storeCourse, updateCourse, deleteCourseHttp } from "../helper/http";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorText from "../components/ErrorText";
 
-export default function ManageCourses({ route, navigation }) {
+export default function ManageCourse({ route, navigation }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const coursesContext = useContext(CoursesContext);
-
   const courseId = route.params?.courseId;
   let isEditing = false;
+
+  const selectedCourse = coursesContext.courses.find(
+    (course) => course.id === courseId
+  );
+
   if (courseId) {
     isEditing = true;
   }
+
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: isEditing ? "Kurs Güncelle" : "Kurs Ekle",
+      title: isEditing ? "Kursu Güncelle" : "Kurs Ekle",
     });
   }, [navigation, isEditing]);
 
-  function deleteContainer() {
-    coursesContext.deleteCourse(courseId);
-    navigation.goBack();
+  async function deleteCourse() {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      coursesContext.deleteCourse(courseId);
+      await deleteCourseHttp(courseId);
+      navigation.goBack();
+    } catch (error) {
+      setError("Silme işlemi anında Bir Hata oluştu!");
+      setIsSubmitting(false);
+    }
+  }
+
+  if (error && !isSubmitting) {
+    return <ErrorText message={error} />;
   }
 
   function cancelHandler() {
     navigation.goBack();
   }
 
-  function addOrUpdateHandler() {
-    if (isEditing) {
-      coursesContext.updateCourse(courseId, {
-        description: "Güncellenen Kurs",
-        amount: 169,
-        date: new Date(),
-      });
-    } else {
-      coursesContext.addCourse( {
-        description: "Eklenen Kurs",
-        amount: 169,
-        date: new Date(),
-      });
+  async function addOrUpdateHandler(courseData) {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      if (isEditing) {
+        coursesContext.updateCourse(courseId, courseData);
+        updateCourse(courseId, courseData);
+      } else {
+        const id = await storeCourse(courseData);
+        coursesContext.addCourse({ ...courseData, id: id });
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError("Yeni Kayıt işlemi anında Bir Hata oluştu!");
+      setIsSubmitting(false);
     }
-    navigation.goBack();
   }
-
+  if (isSubmitting) {
+    return <LoadingSpinner />;
+  }
   return (
     <View style={styles.container}>
+      <CourseForm
+        buttonLabel={isEditing ? "Güncelle" : "Ekle"}
+        onSubmit={addOrUpdateHandler}
+        cancelHandler={cancelHandler}
+        defaultValues={selectedCourse}
+      />
 
-      <CourseForm/>
-      <View style={styles.bottons}>
-        <Pressable onPress={cancelHandler}>
-          <View style={styles.cancel}>
-            <Text style={styles.cancelText}>İptal Et</Text>
-          </View>
-        </Pressable>
-        <Pressable onPress={addOrUpdateHandler}>
-          <View
-            style={[
-              styles.addOrDelete,
-              { backgroundColor: isEditing ? "blue" : "green" },
-            ]}
-          >
-            <Text style={styles.addOrDeleteText}>
-              {isEditing ? "Güncelle" : "Ekle"}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
       {isEditing && (
         <View style={styles.deleteContainer}>
           <EvilIcons
             name="trash"
             size={36}
             color="black"
-            onPress={deleteContainer}
+            onPress={deleteCourse}
           />
         </View>
       )}
@@ -92,28 +105,5 @@ const styles = StyleSheet.create({
     borderTopColor: "blue",
     paddingTop: 10,
     marginTop: 16,
-  },
-  bottons: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  cancel: {
-    backgroundColor: "red",
-    minWidth: 120,
-    marginRight: 10,
-    padding: 8,
-    alignItems: "center",
-  },
-  cancelText: {
-    color: "white",
-  },
-  addOrDelete: {
-    minWidth: 120,
-    marginRight: 10,
-    padding: 8,
-    alignItems: "center",
-  },
-  addOrDeleteText: {
-    color: "white",
   },
 });
